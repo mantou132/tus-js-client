@@ -55,8 +55,7 @@
   },
   "dependencies": {
     "extend": "^3.0.0",
-    "lodash.throttle": "^4.1.1",
-    "resolve-url": "^0.2.1"
+    "lodash.throttle": "^4.1.1"
   },
   "scripts": {
     "build": "browserify lib/index.js -t [ babelify ] -s tus -d | exorcist ./dist/tus.js.map | derequire > dist/tus.js",

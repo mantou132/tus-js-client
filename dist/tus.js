@@ -7,8 +7,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.encode = encode;
 /* global: window */
 
-var _window = window;
-var btoa = _window.btoa;
+var _window = window,
+    btoa = _window.btoa;
 function encode(data) {
   return btoa(unescape(encodeURIComponent(data)));
 }
@@ -16,37 +16,35 @@ function encode(data) {
 var isSupported = exports.isSupported = "btoa" in window;
 
 },{}],2:[function(_dereq_,module,exports){
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.newRequest = newRequest;
 exports.resolveUrl = resolveUrl;
-
-var _resolveUrl = _dereq_("resolve-url");
-
-var _resolveUrl2 = _interopRequireDefault(_resolveUrl);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+/* global window */
 
 function newRequest() {
   return new window.XMLHttpRequest();
-} /* global window */
-
-
-function resolveUrl(origin, link) {
-  return (0, _resolveUrl2.default)(origin, link);
 }
 
-},{"resolve-url":10}],3:[function(_dereq_,module,exports){
-"use strict";
+function resolveUrl(origin, link) {
+  // https://github.com/tus/tus-node-server/blob/b2f33edfcb9d2552d5ae9d526fedfa2c90694eec/lib/handlers/PostHandler.js#L18
+  // 假设 store.path 跟 API 路由一致
+  var paths = link.split('/');
+  return origin + (origin[origin.length - 1] === '/' ? '' : '/') + paths[paths.length - 1];
+}
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+},{}],3:[function(_dereq_,module,exports){
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 exports.getSource = getSource;
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -148,12 +146,12 @@ var DetailedError = function (_Error) {
   _inherits(DetailedError, _Error);
 
   function DetailedError(error) {
-    var causingErr = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-    var xhr = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+    var causingErr = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+    var xhr = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
     _classCallCheck(this, DetailedError);
 
-    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(DetailedError).call(this, error.message));
+    var _this = _possibleConstructorReturn(this, (DetailedError.__proto__ || Object.getPrototypeOf(DetailedError)).call(this, error.message));
 
     _this.originalRequest = xhr;
     _this.causingError = causingErr;
@@ -208,9 +206,9 @@ var defaultOptions = _upload2.default.defaultOptions;
 
 if (typeof window !== "undefined") {
   // Browser environment using XMLHttpRequest
-  var _window = window;
-  var XMLHttpRequest = _window.XMLHttpRequest;
-  var Blob = _window.Blob;
+  var _window = window,
+      XMLHttpRequest = _window.XMLHttpRequest,
+      Blob = _window.Blob;
 
 
   var isSupported = XMLHttpRequest && Blob && typeof Blob.prototype.slice === "function";
@@ -232,16 +230,16 @@ module.exports = {
 },{"./node/storage":4,"./upload":8}],8:[function(_dereq_,module,exports){
 "use strict";
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /* global window */
 
 
 // We import the files used inside the Node environment which are rewritten
 // for browsers using the rules defined in the package.json
 
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
 
 var _fingerprint = _dereq_("./fingerprint");
 
@@ -361,15 +359,15 @@ var Upload = function () {
 
         this._size = size;
       } else {
-        var size = source.size;
+        var _size = source.size;
 
         // The size property will be null if we cannot calculate the file's size,
         // for example if you handle a stream.
-        if (size == null) {
+        if (_size == null) {
           throw new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option");
         }
 
-        this._size = size;
+        this._size = _size;
       }
 
       var retryDelays = this.options.retryDelays;
@@ -377,46 +375,44 @@ var Upload = function () {
         if (Object.prototype.toString.call(retryDelays) !== "[object Array]") {
           throw new Error("tus: the `retryDelays` option must either be an array or null");
         } else {
-          (function () {
-            var errorCallback = _this.options.onError;
-            _this.options.onError = function (err) {
-              // Restore the original error callback which may have been set.
-              _this.options.onError = errorCallback;
+          var errorCallback = this.options.onError;
+          this.options.onError = function (err) {
+            // Restore the original error callback which may have been set.
+            _this.options.onError = errorCallback;
 
-              // We will reset the attempt counter if
-              // - we were already able to connect to the server (offset != null) and
-              // - we were able to upload a small chunk of data to the server
-              var shouldResetDelays = _this._offset != null && _this._offset > _this._offsetBeforeRetry;
-              if (shouldResetDelays) {
-                _this._retryAttempt = 0;
-              }
+            // We will reset the attempt counter if
+            // - we were already able to connect to the server (offset != null) and
+            // - we were able to upload a small chunk of data to the server
+            var shouldResetDelays = _this._offset != null && _this._offset > _this._offsetBeforeRetry;
+            if (shouldResetDelays) {
+              _this._retryAttempt = 0;
+            }
 
-              var isOnline = true;
-              if (typeof window !== "undefined" && "navigator" in window && window.navigator.onLine === false) {
-                isOnline = false;
-              }
+            var isOnline = true;
+            if (typeof window !== "undefined" && "navigator" in window && window.navigator.onLine === false) {
+              isOnline = false;
+            }
 
-              // We only attempt a retry if
-              // - we didn't exceed the maxium number of retries, yet, and
-              // - this error was caused by a request or it's response and
-              // - the browser does not indicate that we are offline
-              var shouldRetry = _this._retryAttempt < retryDelays.length && err.originalRequest != null && isOnline;
+            // We only attempt a retry if
+            // - we didn't exceed the maxium number of retries, yet, and
+            // - this error was caused by a request or it's response and
+            // - the browser does not indicate that we are offline
+            var shouldRetry = _this._retryAttempt < retryDelays.length && err.originalRequest != null && isOnline;
 
-              if (!shouldRetry) {
-                _this._emitError(err);
-                return;
-              }
+            if (!shouldRetry) {
+              _this._emitError(err);
+              return;
+            }
 
-              var delay = retryDelays[_this._retryAttempt++];
+            var delay = retryDelays[_this._retryAttempt++];
 
-              _this._offsetBeforeRetry = _this._offset;
-              _this.options.uploadUrl = _this.url;
+            _this._offsetBeforeRetry = _this._offset;
+            _this.options.uploadUrl = _this.url;
 
-              _this._retryTimeout = setTimeout(function () {
-                _this.start();
-              }, delay);
-            };
-          })();
+            _this._retryTimeout = setTimeout(function () {
+              _this.start();
+            }, delay);
+          };
         }
       }
 
@@ -862,55 +858,6 @@ module.exports = function extend() {
 	return target;
 };
 
-
-},{}],10:[function(_dereq_,module,exports){
-// Copyright 2014 Simon Lydell
-// X11 (“MIT”) Licensed. (See LICENSE.)
-
-void (function(root, factory) {
-  if (typeof define === "function" && define.amd) {
-    define(factory)
-  } else if (typeof exports === "object") {
-    module.exports = factory()
-  } else {
-    root.resolveUrl = factory()
-  }
-}(this, function() {
-
-  function resolveUrl(/* ...urls */) {
-    var numUrls = arguments.length
-
-    if (numUrls === 0) {
-      throw new Error("resolveUrl requires at least one argument; got none.")
-    }
-
-    var base = document.createElement("base")
-    base.href = arguments[0]
-
-    if (numUrls === 1) {
-      return base.href
-    }
-
-    var head = document.getElementsByTagName("head")[0]
-    head.insertBefore(base, head.firstChild)
-
-    var a = document.createElement("a")
-    var resolved
-
-    for (var index = 1; index < numUrls; index++) {
-      a.href = arguments[index]
-      resolved = a.href
-      base.href = resolved
-    }
-
-    head.removeChild(base)
-
-    return resolved
-  }
-
-  return resolveUrl
-
-}));
 
 },{}]},{},[7])(7)
 });
